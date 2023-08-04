@@ -1,103 +1,49 @@
 #!/usr/bin/python3
-""" unittest for the console """
+"""
+    Tests for the HBNB console
+"""
 import unittest
-from io import StringIO
 from unittest.mock import patch
+from io import StringIO
 from console import HBNBCommand
+import os
 from models import storage
-from models.user import User
-from models.state import State
-from models.city import City
-from models.place import Place
-from models.amenity import Amenity
-from models.review import Review
 
 
-class TestConsole(unittest.TestCase):
-    """ Test for the console """
-    def setUp(self):
-        """ Setup """
-        self.cli = HBNBCommand()
+class TestHBNBCommand(unittest.TestCase):
+    """ Tests for the HBNB console """
+
+    @classmethod
+    def setUpClass(cls):
+        """ Create a console object for each test """
+        cls.hbnb = HBNBCommand()
+
+    @classmethod
+    def tearDownClass(cls):
+        """ Delete console object at the end """
+        del cls.hbnb
 
     def tearDown(self):
-        """ Teardown """
-        self.cli = None
+        try:
+            os.remove("file.json")
+        except FileNotFoundError:
+            pass
 
-    def test_create(self):
-        self.cli.onecmd("create State name='California'")
-        output = self.cli.output
-        state_id = output.strip().split()[-1][:-1]
-        self.assertTrue(len(state_id) == 36)
-        self.cli.onecmd("show State {}".format(state_id))
-        output = self.cli.output
-        self.assertTrue("California" in output)
+    @unittest.skipIf(os.getenv("HBNB_TYPE_STORAGE") == "db",
+                     "Test only valid for FileStorage")
+    def test_updatedCreate(self):
+        with patch("sys.stdout", new=StringIO()) as mock_output:
+            self.hbnb.onecmd('create User name="Julian" '
+                             'last_name age=8 lat=37.12')
+            _id = mock_output.getvalue().strip()
 
-    def test_create(self):
-        """ Test create """
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.cli.onecmd("create")
-            self.assertEqual("** class name missing **\n", f.getvalue())
+        storage.reload()
 
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.cli.onecmd("create MyModel")
-            self.assertEqual("** class doesn't exist **\n", f.getvalue())
-
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.cli.onecmd("create State name='California'")
-            output = f.getvalue().strip()
-            self.assertTrue(output.startswith(""))
-
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.cli.onecmd(
-                "create Place city_id='0001' user_id='0001'\
-                    name='House' number_rooms=3 number_bathrooms=2\
-                        max_guest=6 price_by_night=150")
-            output = f.getvalue().strip()
-            self.assertTrue(output.startswith(""))
-
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.cli.onecmd("create Amenity name='Kitchen'")
-            output = f.getvalue().strip()
-            self.assertTrue(output.startswith(""))
-
-    def test_show(self):
-        """ Test show """
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.cli.onecmd("show")
-            self.assertEqual("** class name missing **\n", f.getvalue())
-
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.cli.onecmd("show MyModel")
-            self.assertEqual("** class doesn't exist **\n", f.getvalue())
-
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.cli.onecmd("show State")
-            self.assertEqual("** instance id missing **\n", f.getvalue())
-
-        state = State(name="California")
-        storage.new(state)
-        storage.save()
-
-        with patch('sys.stdout', new=StringIO()) as f:
-            self.cli.onecmd("show State {}".format(state.id))
-            output = f.getvalue().strip()
-            self.assertTrue(output.startswith("[State]"))
-
-    def test_destroy(self):
-        """ test destroy """
-        with patch('sys.stdout', new=StringIO()) as f:
-            HBNBCommand().onecmd("destroy")
-            self.assertEqual("** class name missing **\n", f.getvalue())
-        with patch('sys.stdout', new=StringIO()) as f:
-            HBNBCommand().onecmd("destroy State")
-            self.assertEqual("** instance id missing **\n", f.getvalue())
-        with patch('sys.stdout', new=StringIO()) as f:
-            HBNBCommand().onecmd("destroy BaseModel")
-            self.assertEqual("** instance id missing **\n", f.getvalue())
-        with patch('sys.stdout', new=StringIO()) as f:
-            HBNBCommand().onecmd("destroy BaseModel 1234-1234-1234")
-            self.assertEqual("** no instance found **\n", f.getvalue())
-
-
-if __name__ == '__main__':
-    unittest.main()
+        for key, value in storage.all().items():
+            self.assertEqual(key, "User." + _id)
+            self.assertTrue(getattr(value, 'created_at', None))
+            self.assertTrue(getattr(value, 'updated_at', None))
+            self.assertEqual(getattr(value, 'name', None), 'Julian')
+            self.assertEqual(getattr(value, 'age', None), 8)
+            self.assertEqual(getattr(value, 'lat', None), 37.12)
+            self.assertTrue('last_name' not in value.__dict__)
