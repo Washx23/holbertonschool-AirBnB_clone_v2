@@ -114,38 +114,42 @@ class HBNBCommand(cmd.Cmd):
         pass
 
     def do_create(self, args):
-        """ Create an object of any class,
-        with all the corresponding parameters"""
-        # we tokenize the arguments by spaces
+        """Create an object of any class, with given parameters"""
+        # Tokenize arguments by spaces
         tokenize_arguments = args.split()
-        if tokenize_arguments:
-            class_name = tokenize_arguments[0]
-        if not args:
+
+        # Extract class name and parameters
+        if not tokenize_arguments:
             print("** class name missing **")
             return
-        elif class_name not in HBNBCommand.classes:
+
+        class_name = tokenize_arguments[0]
+        if class_name not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
-        else:
-            attributes = {}
-            for parameter in tokenize_arguments[1:]:
-                key, value = parameter.split('=')
+
+        params = {}
+        for param in tokenize_arguments[1:]:
+            try:
+                key, value = param.split('=')
                 if value.startswith('"') and value.endswith('"'):
                     value = value[1:-1].replace('_', ' ').replace('\\"', '"')
                 elif '.' in value:
                     value = float(value)
                 else:
-                    try:
-                        value = int(value)
-                    except ValueError:
-                        continue
-                attributes[key] = value
+                    value = int(value)
+                params[key] = value
+            except ValueError:
+                continue  # Skip invalid parameters
+
+        # Create a new instance of the specified class and set attributes
         new_instance = HBNBCommand.classes[class_name]()
-        # I update the dictionary with the new attributes
-        new_instance.__dict__.update(attributes)
+        new_instance.__dict__.update(params)
+
+        # Add the instance to the storage and save
         storage.new(new_instance)
-        # serialization
         storage.save()
+
         print(new_instance.id)
 
     def help_create(self):
