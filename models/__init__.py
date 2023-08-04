@@ -1,17 +1,13 @@
 #!/usr/bin/python3
-"""
-    This module instantiates the storage object to persist
-    objects (either to a file or a database)
-"""
-from os import getenv
+"""Creates an instance of the storage engine depending on the environment"""
+import os
 
-storageType = getenv("HBNB_TYPE_STORAGE")
+storage_type = os.getenv("HBNB_TYPE_STORAGE")
 
-if storageType == "db":
+if storage_type == "db":
     from models.engine.db_storage import DBStorage
     storage = DBStorage()
     storage.reload()
-
 else:
     from models.engine.file_storage import FileStorage
     storage = FileStorage()
