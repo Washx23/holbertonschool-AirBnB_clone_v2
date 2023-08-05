@@ -113,10 +113,10 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, arg):
+    def do_create(self, args):
         """Create an object of any class, with given parameters"""
         # Tokenize arguments by spaces
-        tokenize_arguments = arg.split()
+        tokenize_arguments = args.split()
 
         # Extract class name and parameters
         if not tokenize_arguments:
@@ -149,6 +149,7 @@ class HBNBCommand(cmd.Cmd):
         # Add the instance to the storage and save
         storage.new(new_instance)
         storage.save()
+
 
     def help_create(self):
         """ Help information for the create method """
