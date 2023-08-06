@@ -33,7 +33,7 @@ class HBNBCommand(cmd.Cmd):
     def preloop(self):
         """Prints if isatty is false"""
         if not sys.__stdin__.isatty():
-            print('(hbnb)')
+            print('(hbnb)', end=" ")
 
     # def precmd(self, line):
     #     """Reformat command line for advanced command syntax.
@@ -116,32 +116,37 @@ class HBNBCommand(cmd.Cmd):
     def do_create(self, args):
         """ Create an object of any class,
         with all the corresponding parameters"""
+        # we tokenize the arguments by spaces
         tokenize_arguments = args.split()
+        if tokenize_arguments:
+            class_name = tokenize_arguments[0]
         if not args:
             print("** class name missing **")
             return
-        class_name = tokenize_arguments[0]
-        if class_name not in HBNBCommand.classes:
+        elif class_name not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
-        attributes = {}
-        for parameter in tokenize_arguments[1:]:
-            key, value = parameter.split('=')
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1].replace('_', ' ').replace('\\"', '"')
-            elif '.' in value:
-                value = float(value)
-            else:
-                try:
-                    value = int(value)
-                except ValueError:
-                    continue
-            attributes[key] = value
-        new_instance = HBNBCommand.classes[class_name](**attributes)
+        else:
+            attributes = {}
+            for parameter in tokenize_arguments[1:]:
+                key, value = parameter.split('=')
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1].replace('_', ' ').replace('\\"', '"')
+                elif '.' in value:
+                    value = float(value)
+                else:
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        continue
+                attributes[key] = value
+        new_instance = HBNBCommand.classes[class_name]()
+        # I update the dictionary with the new attributes
+        new_instance.__dict__.update(attributes)
         storage.new(new_instance)
+        # serialization
         storage.save()
         print(new_instance.id)
-
 
     def help_create(self):
         """ Help information for the create method """
