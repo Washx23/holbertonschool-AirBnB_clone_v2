@@ -6,32 +6,31 @@
 
 
 from flask import Flask, render_template
-from models import storage
-from models.state import State
+from models import storage, State, City
 
 
 app = Flask(__name__)
 
 
 @app.route('/states', strict_slashes=False)
-def states():
-    """Display a list of all State objects present in DBStorage"""
+def display_states():
     states = storage.all(State).values()
-    return render_template('9-states.html', states=states)
+    sorted_states = sorted(states, key=lambda state: state.name)
+    return render_template('states.html', states=sorted_states)
 
 
 @app.route('/states/<id>', strict_slashes=False)
-def state_cities(id):
-    """Display a list of City objects linked to the State"""
+def display_state_cities(id):
     state = storage.get(State, id)
     if state:
-        return render_template('9-states_cities.html', state=state)
-    return render_template('9-not_found.html')
+        cities = sorted(state.cities, key=lambda city: city.name)
+        return render_template('state.html', state=state, cities=cities)
+    else:
+        return render_template('not_found.html')
 
 
 @app.teardown_appcontext
-def teardown(exception):
-    """Remove the current SQLAlchemy Session"""
+def teardown_db(exception):
     storage.close()
 
 
