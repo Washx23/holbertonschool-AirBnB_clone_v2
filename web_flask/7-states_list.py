@@ -6,28 +6,21 @@
 from flask import Flask, render_template
 from models import storage
 from models.state import State
-
-
 app = Flask(__name__)
 
 
-@app.route("/states_list", strict_slashes=False)
+@app.route('/states_list', strict_slashes=False)
 def states_list():
-    """
-        Displays the list of all states in alphabetical order
-        in an HTML page
-    """
-    states = storage.all(State)
-    stateList = [(state.id, state.name) for state in states.values()]
-    srtStates = sorted(stateList, key=lambda s: s[1])
-    return render_template("7-states_list.html", states=srtStates)
+    """Display a list of all State objects present in DBStorage"""
+    states = storage.all(State).values()
+    return render_template('7-states_list.html', states=states)
 
 
 @app.teardown_appcontext
-def teardown_db(exception):
-    """ Close the DB session """
+def teardown(exception):
+    """Remove the current SQLAlchemy Session"""
     storage.close()
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host='0.0.0.0', port=5000)
